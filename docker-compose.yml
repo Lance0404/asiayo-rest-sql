@@ -1,0 +1,38 @@
+version: '3.8'
+
+services:
+
+  web:
+    container_name: asiayo_web   
+    image: asiayo_web
+    build: ./project
+    command: uvicorn app.main:app --reload --workers 1 --host 0.0.0.0 --port 8000
+    volumes:
+      - ./project:/usr/src/app
+    ports:
+      - 8004:8000
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://postgres:postgres@db:5432/foo
+    depends_on:
+      - db
+    restart: always
+    networks:
+      - backend
+
+  db:
+    container_name: asiayo_psql
+    image: postgres:13.4
+    expose:
+      - 5432
+    ports:
+      - 5432:5432      
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=foo
+    restart: always
+    networks:
+      - backend     
+
+networks:
+  backend:      
