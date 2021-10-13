@@ -1,27 +1,45 @@
 # asiayo-rest-sql
 
-### 
+* [requirement](doc/2021-10_Backend-Pre-test.pdf)
+* [answer for sql quiz](doc/answers.sql)
 
+### Start RESTful application 
+1. `cd project`
+1. `poetry shell`
+1. `peotry install`
+1. `uvicorn app.main:app --reload --workers 1 --host 0.0.0.0 --port 8000` to start the app locally 
+1. OpenAPI UI: `http://localhost:8000/docs`
+
+### Test
+* I only wrote integration tests related to the requirement
+* test cases [here](project/tests/test_currency.py)
+* How to run:
+    1. `cd project`
+    1. `poetry shell` (omit if done already)
+    1. `peotry install` (omit if done already)
+    1. `pytest`
+
+---
+## Additional feature
+* Below are additional features developed for my own interest, free for trial. 
+1. Support Create(POST) and Read(GET) operations related to the sql quiz with a actual Postgresql database
+1. (Undone) Yet to secceed with using sqlalchemy's async session to do an async group_by sql op
 
 ### Start service with docker
-* `docker-compose build` to build docker image `asiayo_web` locally
-* (Optional) or `docker-compose up -d --build` to rebuild image before up
+* at the project root path, e.g. ./asiayo-rest-sql
+* (Optional) `docker-compose build` to build docker image `asiayo_web` locally
+* (Optional) or `docker-compose up -d --build` to rebuild image then up
 * `docker-compose up -d` to init the services accordingly
-* `docker-compose logs -f --tail=10` to check the services are healthy    
+* `docker-compose logs -f --tail=10 web` to check the services are healthy    
+* OpenAPI UI: `http://localhost:8000/docs`
 
-### db migration
-* (Optional) prefix the command with `docker-compose exec web ` if you are doing it from the container
-* `alembic init -t async migrations` to generate alembic configs
-* `alembic revision --autogenerate -m "init"` to generate the first migration file
-* `alembic upgrade head` to apply the migration
-* `alembic downgrade -1` to go back one revision
 
+### Database initialization
+* I use alembic to initialize the psql db 
+* `docker-compose exec web alembic upgrade head` to apply the migration
 * **Beware** that the `sqlalchemy.url` within the `alembic.ini` may differ depending on how you start the app, with or without docker.
+* should be `sqlalchemy.url = postgresql+asyncpg://postgres:postgres@db:5432/foo` if running commands from the docker
 
-
-#### Debug
-* `sudo chown lance -R *` to have permission to modify files generated from within container
-* there are some issues during the alembic ops related to VSCode, which can fixed by restarting the IDE.
-
+---
 ### Misc
 * my notes during development, [README_dev.md](doc/README_dev.md)

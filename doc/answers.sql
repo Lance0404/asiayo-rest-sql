@@ -1,4 +1,4 @@
---create three tables related with fk
+--create three tables with SQL complying to Postgres
 CREATE TABLE [IF NOT EXISTS] property (
     id INT PRIMARY,
     name VARCHAR(255) UNIQUE NOT NULL
