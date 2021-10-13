@@ -1,7 +1,19 @@
+from enum import Enum
 from datetime import datetime
 from typing import List, Optional
 
 from sqlmodel import Field, Relationship, SQLModel
+
+class CurrenyType(str, Enum):
+    TWD = "TWD"
+    JPY = "JPY"
+    USD = "USD"
+
+class CurrencyFrom(SQLModel):
+    from_currency: CurrenyType
+    from_amount: float = 1
+    to_currency: CurrenyType
+    # to_amount: str
 
 
 class PropertyBase(SQLModel):

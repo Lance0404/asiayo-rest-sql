@@ -1,8 +1,7 @@
 
+
 ### TODO
 1. study how to setup relation with SQLModel
-
-
 
 ### Docker
 * `docker-compose exec web bash` to have a peek at the container

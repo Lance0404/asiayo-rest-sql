@@ -10,7 +10,7 @@ from typing import List
 from sqlalchemy.orm import selectinload
 
 from app.db import get_session
-from app.models import Property, PropertyCreate, Room, RoomCreate, Order, OrderCreate
+from app.models import CurrencyFrom, Property, PropertyCreate, Room, RoomCreate, Order, OrderCreate
 
 app = FastAPI()
 
@@ -18,6 +18,37 @@ app = FastAPI()
 @app.get("/ping")
 async def pong():
     return {"ping": "pong!"}
+
+currencies = {
+    "TWD": {
+        "TWD": 1,
+        "JPY": 3.669,
+        "USD": 0.03281
+    },
+    "JPY": {
+        "TWD": 0.26956,
+        "JPY": 1,
+        "USD": 0.00885
+    },
+    "USD": {
+        "TWD": 30.444,
+        "JPY": 111.801,
+        "USD": 1
+    }
+}
+
+@app.post("/currency")
+async def convert_currency(cf: CurrencyFrom) -> str:
+    # REF: https://pythonguides.com/python-format-number-with-commas/
+    to_amount: float = cf.from_amount * currencies[cf.from_currency][cf.to_currency]
+    formated_to_amount = '{:,.2f}'.format(to_amount)
+    print(f'origin    {cf.from_amount}')
+    print(f'converted {to_amount}')    
+    print(f'formated  {formated_to_amount}')
+# origin    914.314
+# converted 29.998642339999996
+# formated  30.00    
+    return formated_to_amount
 
 @app.get("/property")
 async def get_property(session: AsyncSession = Depends(get_session)):
@@ -64,9 +95,15 @@ async def add_order(order: OrderCreate, session: AsyncSession = Depends(get_sess
 
 @app.get("/property/{year}/{month}/{top}/")
 async def get_top_property(year: int = 2021, month: int = 10, top: int = 10, session: AsyncSession = Depends(get_session)):
+    """
+    TODO: I failed to do a `GROUP BY` op under the `AsyncSession`, 
+    nor can I revert to use a normal sync session to achieve this.
+    Check on https://docs.sqlalchemy.org/en/14/orm/extensions/asyncio.html later
+    """
     ym = datetime.strptime(f"{year}-{month}", "%Y-%m")
     ym_max = ym + relativedelta(months=1)
-    count = func.count(Property.id)
+    # session.run_sync()
+    # count = func.count(Property.id)
     # stmt = (
     #     session.query(Property, count)
     #     # .select_from(Room, Order)
@@ -81,8 +118,6 @@ async def get_top_property(year: int = 2021, month: int = 10, top: int = 10, ses
     # )
     # results = stmt.all()
     # print(f'results {results}')
-
-
     stmt = (
         select(Order, Room, Property)
         # .select_from(Order)
