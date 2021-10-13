@@ -8,7 +8,7 @@ from sqlmodel import SQLModel
 
 from alembic import context
 
-from app.models import Property, Room, Orders
+from app.models import Property, Room, Order
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

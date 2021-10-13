@@ -1,33 +1,39 @@
 from datetime import datetime
-from typing import Optional
+from typing import List, Optional
 
-from sqlmodel import SQLModel, Field
+from sqlmodel import Field, Relationship, SQLModel
 
 
-class Property(SQLModel, table=True):
-    id: Optional[int] = Field(default=None, primary_key=True)
+class PropertyBase(SQLModel):
     name: str
+class Property(PropertyBase, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)    
+    rooms: List["Room"] = Relationship(back_populates="property")
 
-class Room(SQLModel, table=True):
-    id: Optional[int] = Field(default=None, primary_key=True)
-    property_id: int
+class PropertyCreate(PropertyBase):
+    pass
+
+
+class RoomBase(SQLModel):
     name: str
+    property_id: int = Field(default=None, foreign_key="property.id")
 
-class Orders(SQLModel, table=True):
+class Room(RoomBase, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
-    room_id: int
+    property: Optional[Property] = Relationship(back_populates="rooms")
+    orders: List["Order"] = Relationship(back_populates="room")
+
+class RoomCreate(RoomBase):
+    pass
+
+class OrderBase(SQLModel):
     price: int
-    create_at: datetime
+    create_at: Optional[datetime] = Field(default=datetime.now())
+    room_id: int = Field(default=None, foreign_key="room.id")
 
-# class SongBase(SQLModel):
-#     name: str
-#     artist: str
-#     year: Optional[int] = None
+class Order(OrderBase, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    room: Optional[Room] = Relationship(back_populates="orders")
 
-
-# class Song(SongBase, table=True):
-#     id: int = Field(default=None, primary_key=True)
-
-
-# class SongCreate(SongBase):
-#     pass
+class OrderCreate(OrderBase):
+    pass

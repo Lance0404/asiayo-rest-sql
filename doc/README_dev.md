@@ -1,4 +1,8 @@
 
+### TODO
+1. study how to setup relation with SQLModel
+
+
 
 ### Docker
 * `docker-compose exec web bash` to have a peek at the container
@@ -7,4 +11,4 @@
 
 ### Reference
 1. [fastapi-sqlmodel](https://testdriven.io/blog/fastapi-sqlmodel/)
-
+2. [undo last migration](https://stackoverflow.com/a/48242325/8937834)
