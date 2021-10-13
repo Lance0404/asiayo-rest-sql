@@ -6,6 +6,7 @@ from sqlmodel import Field, Relationship, SQLModel
 
 class PropertyBase(SQLModel):
     name: str
+
 class Property(PropertyBase, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)    
     rooms: List["Room"] = Relationship(back_populates="property")
@@ -13,7 +14,16 @@ class Property(PropertyBase, table=True):
 class PropertyCreate(PropertyBase):
     pass
 
+class PropertyInfo(PropertyBase):
+    order_count: Optional[int]
 
+class Properties(SQLModel):
+    proerties: List[PropertyInfo]
+
+
+# class DateInfo(SQLModel):
+#     pass
+#     year: 
 class RoomBase(SQLModel):
     name: str
     property_id: int = Field(default=None, foreign_key="property.id")

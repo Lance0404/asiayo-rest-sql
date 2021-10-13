@@ -12,3 +12,4 @@
 ### Reference
 1. [fastapi-sqlmodel](https://testdriven.io/blog/fastapi-sqlmodel/)
 2. [undo last migration](https://stackoverflow.com/a/48242325/8937834)
+3. [asyncio orm avoid lazyloads](https://docs.sqlalchemy.org/en/14/orm/extensions/asyncio.html#asyncio-orm-avoid-lazyloads)

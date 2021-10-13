@@ -2,8 +2,9 @@ import os
 
 from sqlmodel import SQLModel
 
+from sqlalchemy import create_engine
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import sessionmaker, Session
 # TODO: `load_dotenv` is for dev env only
 from dotenv import load_dotenv
 
@@ -15,6 +16,7 @@ print(f'DATABASE_URL {DATABASE_URL}')
 engine = create_async_engine(DATABASE_URL, echo=True, future=True)
 
 
+# TODO: can be removed, cause I use alembic instead
 async def init_db():
     async with engine.begin() as conn:
         # await conn.run_sync(SQLModel.metadata.drop_all)
