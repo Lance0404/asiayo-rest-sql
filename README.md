@@ -5,8 +5,8 @@
 
 ### Start RESTful application 
 1. `cd project`
+1. `poetry install`
 1. `poetry shell`
-1. `peotry install`
 1. `uvicorn app.main:app --reload --workers 1 --host 0.0.0.0 --port 8000` to start the app locally 
 1. OpenAPI UI: `http://localhost:8000/docs`
 
@@ -15,8 +15,8 @@
 * test cases [here](project/tests/test_currency.py)
 * How to run:
     1. `cd project`
+    1. `poetry install` (omit if done already)    
     1. `poetry shell` (omit if done already)
-    1. `peotry install` (omit if done already)
     1. `pytest`
 
 ---
