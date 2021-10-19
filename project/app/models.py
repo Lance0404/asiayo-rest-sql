@@ -20,6 +20,7 @@ class PropertyBase(SQLModel):
     name: str
 
 class Property(PropertyBase, table=True):
+    __tablename__ = 'property'
     id: Optional[int] = Field(default=None, primary_key=True)    
     rooms: List["Room"] = Relationship(back_populates="property")
 
@@ -30,7 +31,7 @@ class PropertyInfo(PropertyBase):
     order_count: Optional[int]
 
 class Properties(SQLModel):
-    proerties: List[PropertyInfo]
+    properties: List[PropertyInfo]
 
 
 # class DateInfo(SQLModel):
@@ -41,6 +42,7 @@ class RoomBase(SQLModel):
     property_id: int = Field(default=None, foreign_key="property.id")
 
 class Room(RoomBase, table=True):
+    __tablename__ = 'room'
     id: Optional[int] = Field(default=None, primary_key=True)
     property: Optional[Property] = Relationship(back_populates="rooms")
     orders: List["Order"] = Relationship(back_populates="room")
@@ -54,6 +56,8 @@ class OrderBase(SQLModel):
     room_id: int = Field(default=None, foreign_key="room.id")
 
 class Order(OrderBase, table=True):
+    # TODO: inconsistency btw the table name and class name is bad, but order is a keyword in SQL
+    __tablename__ = 'orders'
     id: Optional[int] = Field(default=None, primary_key=True)
     room: Optional[Room] = Relationship(back_populates="orders")
 

@@ -4,13 +4,16 @@ from fastapi import Depends, FastAPI
 from sqlalchemy.future import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Session
-from sqlalchemy.sql.expression import func
+from sqlalchemy.sql import text
+from sqlalchemy.sql.expression import bindparam
+from sqlalchemy import func
 from typing import List
 
 from sqlalchemy.orm import selectinload
+from sqlalchemy.sql.sqltypes import DateTime, Integer
 
 from app.db import get_session
-from app.models import CurrencyFrom, Property, PropertyCreate, Room, RoomCreate, Order, OrderCreate
+from app.models import CurrencyFrom, Property, PropertyCreate, PropertyInfo, Room, RoomCreate, Order, OrderCreate
 
 app = FastAPI()
 
@@ -92,76 +95,60 @@ async def add_order(order: OrderCreate, session: AsyncSession = Depends(get_sess
     await session.refresh(order)
     return order
 
+def do_group_by(session: Session, dt_min: datetime, dt_max: datetime, limit: int):
+    c = func.count(Property.id)
+    q = (
+        session.query(Property.name, c)
+        .filter(Order.room_id == Room.id)
+        .filter(Room.property_id == Property.id)        
+        .filter(Order.create_at >= dt_min)
+        .filter(Order.create_at < dt_max)
+        .group_by(Property.name)
+        .order_by(c)
+        .limit(limit)
+    )
+    print(q)
+    ret = q.all()
+    print(f'ret {ret}')
+    return [PropertyInfo(name=i[0], order_count=i[1]) for i in ret]
 
 @app.get("/property/{year}/{month}/{top}/")
 async def get_top_property(year: int = 2021, month: int = 10, top: int = 10, session: AsyncSession = Depends(get_session)):
     """
-    TODO: I failed to do a `GROUP BY` op under the `AsyncSession`, 
-    nor can I revert to use a normal sync session to achieve this.
-    Check on https://docs.sqlalchemy.org/en/14/orm/extensions/asyncio.html later
+    https://docs.sqlalchemy.org/en/14/orm/extensions/asyncio.html#running-synchronous-methods-and-functions-under-asyncio
     """
     ym = datetime.strptime(f"{year}-{month}", "%Y-%m")
     ym_max = ym + relativedelta(months=1)
-    # session.run_sync()
-    # count = func.count(Property.id)
-    # stmt = (
-    #     session.query(Property, count)
-    #     # .select_from(Room, Order)
-    #     .join(Room.property)
-    #     # .select_from(Order)
-    #     # .join(Order.room)
-    #     # .filter(Order.create_at >= ym)
-    #     # .filter(Order.create_at < ym_max)
-    #     .group_by(Property.name)
-    #     # .order_by(count.desc())
-    #     # .limit(top)
-    # )
-    # results = stmt.all()
-    # print(f'results {results}')
-    stmt = (
-        select(Order, Room, Property)
-        # .select_from(Order)
-        # .select_from(Order, Room, Property)
-        .options(selectinload(Order.room))
-        .options(selectinload(Room.property))
-        # .join_from(Order, Room, Order.room_id == Room.id)
-        .join(Room, Order.room_id == Room.id)
-        .join(Property, Room.property_id == Property.id)
-        .filter(Order.create_at >= ym)
-        .filter(Order.create_at < ym_max)
-        .group_by(Property.name)
-    ) 
-    """"
-    raw SQL confirmed in pgAdmin:
+    return await session.run_sync(do_group_by, ym, ym_max, top)
 
-    * spread out version
-SELECT "order".price, "order".create_at, "order".room_id, "order".id, "room".name, property.name
-FROM "order" 
-JOIN room ON "order".room_id = room.id 
-JOIN property ON room.property_id = property.id
-WHERE create_at >= '2021-10-01'::date
-AND create_at < ('2021-10-01'::date + '1 month'::interval)
-
-    * aggregated version
-SELECT property.name, count(*) as counts
-FROM "order" 
-JOIN room ON "order".room_id = room.id 
-JOIN property ON room.property_id = property.id
-WHERE create_at >= '2021-10-01'::date
-AND create_at < ('2021-10-01'::date + '1 month'::interval)
-GROUP BY property.name
-ORDER BY counts
-LIMIT 10
+@app.get("/property_test/{year}/{month}/{top}/")
+async def get_top_property_test(year: int = 2021, month: int = 10, top: int = 10, session: AsyncSession = Depends(get_session)):
     """
-    # session.
-    result = await session.execute(stmt)
-    orders: List[Order] = result.scalars().all()
-    # print(orders)
-    # print(type(orders))
-    # [Order(room_id=1, create_at=datetime.datetime(2021, 10, 13, 10, 36, 9, 3180), price=600, id=2), Order(room_id=2, create_at=datetime.datetime(2021, 10, 13, 10, 50, 41, 779089), price=200, id=3)]
-
-    # for order in orders:
-    #     print(type(order.room))
-    #     print(order.room)
-    return None
-    # return [order.room.name for order in orders]
+    https://docs.sqlalchemy.org/en/14/core/tutorial.html#using-textual-sql
+    """
+    ym = datetime.strptime(f"{year}-{month}", "%Y-%m")
+    ym_max = ym + relativedelta(months=1)
+    s = text(
+        "select property.name, count(property.id) as c "
+        "FROM orders, room, property "
+        "WHERE orders.room_id = room.id "
+        "AND room.property_id = property.id "
+        "AND orders.create_at >= :min "
+        "AND orders.create_at < :max "
+        "GROUP BY property.name "
+        "ORDER BY c DESC "
+        "LIMIT :top"
+    )
+    s = s.bindparams(
+        bindparam("min", type_=DateTime),
+        bindparam("max", type_=DateTime),
+        bindparam("top", type_=Integer)
+    )
+    params = {
+        "min": ym,
+        "max": ym_max,
+        "top": top
+    }
+    result = await session.execute(s, params)
+    ret = result.all()
+    return [PropertyInfo(name=i[0], order_count=i[1]) for i in ret]

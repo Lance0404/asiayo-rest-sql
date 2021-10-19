@@ -5,6 +5,14 @@
 1. async group by sql op
 1. async pytest
 
+### Feedback 
+SQL1
+- The SQL could not create tables.
+- Suggest the primary key type is "serial".
+- The "order" is a keyword could not be a table name.
+API 1
+- nit: add API throttle
+- nit: add API log
 
 ### Dev locally
 * create a file `project/app/.env`
